@@ -7,49 +7,17 @@ Shadow is inherited, and a shape often appears with a shadow without
 explicitly applying a shadow format.
 
 The only difference in a shape with shadow turned off is the presence of an
-empty `<a:effectLst/>` child in its `<p:spPr>` element.
+empty `<a:effectLst/>` child in its `<p:spPr>` element. Inherited shadow is
+turned off when `p:spPr/a:effectLst` is present with no `a:outerShdw` child
+element. Other effect child elements may be present.
 
-Inherited shadow is turned off when `p:spPr/a:effectLst` is present with no
-`a:outerShdw` child element. Other effect child elements may be present.
-
-A shadow is one type of "effect". The others are glow/soft-edges and reflection.
+A shadow is one type of "effect". The others are glow/soft-edges and
+reflection.
 
 Shadow may be of type *outer* (perhaps most common), *inner*, or
 *perspective*.
 
-* [ ] ? What shapes can have a shadow?
-
-  + AutoShape
-  + Connector
-  + Picture
-  + Graphics Frame
-  + Group Shape
-
-* [ ] Adding shadow to a group shape adds that shadow to each component shape
-      in the group.
-
-There is a "new shape format" concept. This format determines what a new
-shape looks like, but does not change the appearance of shapes already in
-place.
-
-*Theme Effects* are a thing here. They are Subtle, Moderate, and Intense.
-
-There are 40 built-in theme effects. Each of these have ...
-
-Theme sub-tree `a:theme/a:objectDefaults/a:spDef/a:style/a:effectRef/idx=2`
-specifies that new objects will get the second effect in
-`a:theme/a:themeElements/a:fmtScheme/a:effectStyleLst`. That effect looks
-like this::
-
-  <a:effectStyle>
-    <a:effectLst>
-      <a:outerShdw blurRad="40000" dist="23000" dir="5400000" rotWithShape="0">
-        <a:srgbClr val="000000">
-          <a:alpha val="35000"/>
-        </a:srgbClr>
-      </a:outerShdw>
-    </a:effectLst>
-  </a:effectStyle>
+.. highlight:: xml
 
 
 Scope
@@ -95,6 +63,8 @@ Nice to have for finer tuning
 Protocol
 --------
 
+.. highlight:: python
+
 Assigning `None` removes any local override, causing shadow to be inherited
 from parent. Note that it does not cause `shape.shadow` to return None;
 `shape.shadow` *always* returns *the* `ShadowFormat` object for that shape::
@@ -114,8 +84,50 @@ This has the side-effect of disabling inheritance of all effects for that
 shape.
 
 
+PowerPoint behaviors
+--------------------
+
+* All 5 shape-types can display a shadow, but graphics-frame objects like
+  chart and table use a different mechanism than the other shapes. Those
+  won't be supported initially.
+
+  + AutoShape
+  + Connector
+  + Picture
+  + Group Shape (parent is `p:grpSpPr` rather than `p:spPr`)
+  + Graphics Frame (UI allows, but uses a different mechanism)
+
+* Adding shadow to a group shape adds that shadow to each component shape in
+  the group.
+
+* There is a "new-shape format" concept. This format determines what a new
+  shape looks like, but does not change the appearance of shapes already in
+  place. It's basically a template imprinted on new shapes when they are
+  added.
+
+*Theme Effects* are a thing here. They are Subtle, Moderate, and Intense.
+
+There are 40 built-in theme effects. Each of these have ...
+
+* Setting visible off (Format Shape > Shadow > Clear Shadow checkbox) for
+  a customized shadow removes all customized settings and they are not
+  recoverable by setting the shadow visible again (clicking the shadow
+  checkbox).
+
+
+MS API
+------
+
+ShadowFormat object
+~~~~~~~~~~~~~~~~~~~
+
+* `ShadowFormat.Visible`
+
+
 Specimen XML
 ------------
+
+.. highlight:: xml
 
 Shape inheriting shadow. Note the absence of `p:spPr/a:effectLst`, causing
 all effects to be inherited::
@@ -213,27 +225,40 @@ XML Semantics
   populated with inherited values when one of the effects is customized,
   necessitating that addition of an `a:effectLst` element.
 
+* Theme sub-tree `a:theme/a:objectDefaults/a:spDef/a:style/a:effectRef/idx=2`
+  specifies that new objects will get the second effect in
+  `a:theme/a:themeElements/a:fmtScheme/a:effectStyleLst`. That effect looks
+  like this::
 
-PowerPoint behaviors
---------------------
-
-* Set visible off for a customized shadow removes all customized settings and
-  they are not recoverable by setting the shadow visible again.
-
-
-MS API
-------
-
-ShadowFormat object
-~~~~~~~~~~~~~~~~~~~
-
-* `ShadowFormat.Visible`
+  <a:effectStyle>
+    <a:effectLst>
+      <a:outerShdw blurRad="40000" dist="23000" dir="5400000"
+          rotWithShape="0">
+        <a:srgbClr val="000000">
+          <a:alpha val="35000"/>
+        </a:srgbClr>
+      </a:outerShdw>
+    </a:effectLst>
+  </a:effectStyle>
 
 
 Schema excerpt
 --------------
 
+.. highlight:: xml
+
 ::
+
+  <xsd:complexType name="CT_Shape">  <!-- p:sp element -->
+    <xsd:sequence>
+      <xsd:element name="nvSpPr" type="CT_ShapeNonVisual"/>
+      <xsd:element name="spPr"   type="a:CT_ShapeProperties"/>
+      <xsd:element name="style"  type="a:CT_ShapeStyle"        minOccurs="0"/>
+      <xsd:element name="txBody" type="a:CT_TextBody"          minOccurs="0"/>
+      <xsd:element name="extLst" type="CT_ExtensionListModify" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="useBgFill" type="xsd:boolean" default="false"/>
+  </xsd:complexType>
 
   <xsd:complexType name="CT_ShapeProperties">  <!--denormalized-->
     <xsd:sequence>
