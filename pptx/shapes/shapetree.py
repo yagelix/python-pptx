@@ -530,7 +530,7 @@ class SlideShapes(_BaseGroupShapes):
         return SlideShapeFactory(shape_elm, self)
 
 
-class LayoutShapes(_BaseShapes):
+class LayoutShapes(_BaseGroupShapes):
     """
     Sequence of shapes appearing on a slide layout. The first shape in the
     sequence is the backmost in z-order and the last shape is topmost.
